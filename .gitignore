@@ -2,3 +2,5 @@ invoice.pdf
 node_modules
 .env
 .notes
+bundle.js
+bundle.js.map

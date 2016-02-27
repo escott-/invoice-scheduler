@@ -1,16 +1,16 @@
-var fs = require('fs');
-var Invoice = require('invoice-ninja');
-var nodemailer = require('nodemailer');
-var smtpTransport = require('nodemailer-smtp-transport');
-var XOAuth2 = require('xoauth2');
+import fs from 'fs';
+import Invoice from 'invoice-ninja';
+import nodemailer from 'nodemailer';
+import smtpTransport from 'nodemailer-smtp-transport';
+import XOAuth2 from 'xoauth2';
 
-today = new Date();
-due = new Date()
+const today = new Date();
+const due = new Date()
 due.setDate(today.getDate() + 30);
 
 // check balance from cloud store
 // if balance add balance to balance field
-input = {
+const input = {
   currencyFormat: "$",
   invoice_number: 2,
   date_now: today.toDateString(),
@@ -44,7 +44,8 @@ var schedule = require('node-schedule');
 // 20 * * * * * for testing
 var j = schedule.scheduleJob('20 * * * * *', function(){
   var invoice = new Invoice();
-  invoice.generatePDFStream(input).pipe(stream = fs.createWriteStream('invoice.pdf'))
+  const stream = fs.createWriteStream('invoice.pdf');
+  invoice.generatePDFStream(input).pipe(stream)
   stream.on('close', function(err){
     if(!err){
       // send mail with defined transport object
