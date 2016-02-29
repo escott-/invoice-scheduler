@@ -39,11 +39,12 @@ const transporter = nodemailer.createTransport(({
     xoauth2: generator
   }
 }));
+
 // create scheduler to run create.js every 30 days
 const schedule = require('node-schedule');
 // 0 0 */30 0 0 every 30 days
 // 20 * * * * * for testing
-const j = schedule.scheduleJob('20 * * * * *', function(){
+schedule.scheduleJob('20 * * * * *', function(){
   const invoice = new Invoice();
   const stream = fs.createWriteStream('invoice.pdf');
   invoice.generatePDFStream(input).pipe(stream)

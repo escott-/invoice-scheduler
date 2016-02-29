@@ -8,7 +8,7 @@ module.exports = {
   externals: [nodeExternals()],
   output: {
     path: __dirname,
-    filename: 'bundle.js'
+    filename: 'bundle.min.js'
   },
   module: {
     loaders: [
@@ -29,7 +29,8 @@ module.exports = {
   },
   plugins: [
       // Avoid publishing files when compilation fails
-    new webpack.NoErrorsPlugin()
+    new webpack.NoErrorsPlugin(),
+    new webpack.optimize.UglifyJsPlugin({minimize: true})
   ],
   stats: {
       // Nice colored output

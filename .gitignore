@@ -3,4 +3,6 @@ node_modules
 .env
 .notes
 bundle.js
+bundle.min.js
+bundle.min.js.map
 bundle.js.map
