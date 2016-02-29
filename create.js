@@ -6,7 +6,7 @@ import XOAuth2 from 'xoauth2';
 import config from './config';
 import gcloud from 'gcloud';
 
-var projectId = config.PROJECT_ID;
+const projectId = config.PROJECT_ID;
 
 if (!projectId) {
   var MISSING_ID = [
@@ -16,7 +16,7 @@ if (!projectId) {
   throw new Error(MISSING_ID);
 }
 
-var ds = gcloud.datastore.dataset({
+const ds = gcloud.datastore.dataset({
   projectId: config.PROJECT_ID
 });
 
@@ -24,8 +24,6 @@ const today = new Date();
 const due = new Date()
 due.setDate(today.getDate() + 30);
 
-// check balance from cloud store
-// if balance add balance to balance field
 const input = {
   currencyFormat: config.INVOICE_CURRENCY_FORMAT,
   invoice_number: 2,
@@ -33,6 +31,8 @@ const input = {
   date_due: due.toDateString(),
   from_name: config.INVOICE_FROM_NAME,
   client_name: config.INVOICE_CLIENT_NAME,
+  subtotal: config.INVOICE_AMOUNT,
+  balance: config.INVOICE_AMOUNT,
   items: [
     {
       description: config.INVOICE_DESCRIPTION,
@@ -59,21 +59,36 @@ const transporter = nodemailer.createTransport(({
 const schedule = require('node-schedule');
 // 0 0 */30 0 0 every 30 days
 // 20 * * * * * for testing
-schedule.scheduleJob('20 * * * * *', function(){
+// invoice number = query the last invoice number || pick a number to start
+// balance = query balance and add amount || if no balance it will be amount
+
+const q = ds.createQuery("Invoice")
+  .order('invoice_number', {
+    descending: true
+  })
+  .limit(1);
+
+schedule.scheduleJob('2 * * * * *', function(){
   const invoice = new Invoice();
   const stream = fs.createWriteStream('invoice.pdf');
-  invoice.generatePDFStream(input).pipe(stream);
-  var entity = {
-    key: ds.key("Invoice"),
-    data: {
-      invoice_number: 1,
-      amount: config.INVOICE_AMOUNT,
-      email: config.EMAIL_TO,
+  ds.runQuery(q, function(err, invoices) {
+    if (err) {
+      // log error
+      return err
     }
-  };
-  stream.on('close', function(err){
-    if(!err){
-      // send mail with defined transport object
+    input.balance = invoices.length === 0 ? parseInt(config.INVOICE_AMOUNT) : invoices[0].data.balance + parseInt(config.INVOICE_AMOUNT)
+    var entity = {
+      key: ds.key("Invoice"),
+      data: {
+        invoice_number: invoices.length === 0 ? 1 : ++invoices[0].data.invoice_number,
+        amount: parseInt(config.INVOICE_AMOUNT),
+        email: config.EMAIL_TO,
+        paid:"pending",
+        balance: invoices.length === 0 ? parseInt(config.INVOICE_AMOUNT) : invoices[0].data.balance + parseInt(config.INVOICE_AMOUNT)
+      }
+    };
+    invoice.generatePDFStream(input).pipe(stream);
+    stream.on('close', function(err){
       transporter.verify(function(error, success) {
        if (error) {
          console.log(error);
@@ -99,14 +114,12 @@ schedule.scheduleJob('20 * * * * *', function(){
                   console.log(key);
                 });
               }
-         });
-       }
+            });
+          }
+        });
       });
-    } else {
-      // log error
-    }
-  })
-});
+    });
+  });
 
 // after scheduler completes send email
 // after email completes
