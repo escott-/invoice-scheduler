@@ -3,6 +3,7 @@ import Invoice from 'invoice-ninja';
 import nodemailer from 'nodemailer';
 import smtpTransport from 'nodemailer-smtp-transport';
 import XOAuth2 from 'xoauth2';
+import config from './config';
 
 const today = new Date();
 const due = new Date()
@@ -11,39 +12,39 @@ due.setDate(today.getDate() + 30);
 // check balance from cloud store
 // if balance add balance to balance field
 const input = {
-  currencyFormat: "$",
+  currencyFormat: config.INVOICE_CURRENCY_FORMAT,
   invoice_number: 2,
   date_now: today.toDateString(),
   date_due: due.toDateString(),
-  from_name: '',
-  client_name: '',
+  from_name: config.INVOICE_FROM_NAME,
+  client_name: config.INVOICE_CLIENT_NAME,
   items: [
     {
-      description: 'Web Hosting',
-      quantity: 1,
-      rate: 30,
-      amount: 30
+      description: config.INVOICE_DESCRIPTION,
+      quantity: config.INVOICE_QUANTITY,
+      rate: config.INVOICE_RATE,
+      amount: config.INVOICE_AMOUNT
     }
   ]
 };
-var generator = require('xoauth2').createXOAuth2Generator({
-  user: '',
-  clientId: '',
-  clientSecret: '',
-  refreshToken: ''
+const generator = require('xoauth2').createXOAuth2Generator({
+  user: config.USERNAME,
+  clientId: config.CLIENT_ID,
+  clientSecret: confg.CLIENT_SECRET,
+  refreshToken: config.REFRESH_TOKEN
 });
-var transporter = nodemailer.createTransport(({
+const transporter = nodemailer.createTransport(({
   service: 'gmail',
   auth: {
     xoauth2: generator
   }
 }));
 // create scheduler to run create.js every 30 days
-var schedule = require('node-schedule');
+const schedule = require('node-schedule');
 // 0 0 */30 0 0 every 30 days
 // 20 * * * * * for testing
-var j = schedule.scheduleJob('20 * * * * *', function(){
-  var invoice = new Invoice();
+const j = schedule.scheduleJob('20 * * * * *', function(){
+  const invoice = new Invoice();
   const stream = fs.createWriteStream('invoice.pdf');
   invoice.generatePDFStream(input).pipe(stream)
   stream.on('close', function(err){
@@ -54,19 +55,19 @@ var j = schedule.scheduleJob('20 * * * * *', function(){
          console.log(error);
        } else {
          transporter.sendMail({
-           from: '',
-           to: '',
-           subject: 'hello world!',
-           text: 'Authenticated with OAuth2',
+           from: config.EMAIL_FROM,
+           to: config.EMAIL_TO,
+           subject: config.EMAIL_SUBJECT,
+           text: config.EMAIL_TEXT,
            attachments: [{   // stream as an attachment
-             filename: 'invoice.pdf',
-             content: fs.createReadStream('invoice.pdf')
+             filename: config.EMAIL_ATTACHMENT,
+             content: fs.createReadStream(config.EMAIL_ATTACHMENT)
            }]
          }, function(error, response) {
               if (error) {
-                   console.log(error);
+                console.log(error);
               } else {
-                   console.log('Message sent');
+                console.log('Message sent');
               }
          });
        }
