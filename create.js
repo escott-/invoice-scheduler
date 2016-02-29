@@ -4,6 +4,21 @@ import nodemailer from 'nodemailer';
 import smtpTransport from 'nodemailer-smtp-transport';
 import XOAuth2 from 'xoauth2';
 import config from './config';
+import gcloud from 'gcloud';
+
+var projectId = config.PROJECT_ID;
+
+if (!projectId) {
+  var MISSING_ID = [
+    'Cannot find your project ID. Please set an environment variable named ',
+    '"DATASET_ID", holding the ID of your project.'
+  ].join('');
+  throw new Error(MISSING_ID);
+}
+
+var ds = gcloud.datastore.dataset({
+  projectId: config.PROJECT_ID
+});
 
 const today = new Date();
 const due = new Date()
@@ -30,7 +45,7 @@ const input = {
 const generator = require('xoauth2').createXOAuth2Generator({
   user: config.USERNAME,
   clientId: config.CLIENT_ID,
-  clientSecret: confg.CLIENT_SECRET,
+  clientSecret: config.CLIENT_SECRET,
   refreshToken: config.REFRESH_TOKEN
 });
 const transporter = nodemailer.createTransport(({
@@ -47,7 +62,15 @@ const schedule = require('node-schedule');
 schedule.scheduleJob('20 * * * * *', function(){
   const invoice = new Invoice();
   const stream = fs.createWriteStream('invoice.pdf');
-  invoice.generatePDFStream(input).pipe(stream)
+  invoice.generatePDFStream(input).pipe(stream);
+  var entity = {
+    key: ds.key("Invoice"),
+    data: {
+      invoice_number: 1,
+      amount: config.INVOICE_AMOUNT,
+      email: config.EMAIL_TO,
+    }
+  };
   stream.on('close', function(err){
     if(!err){
       // send mail with defined transport object
@@ -68,7 +91,13 @@ schedule.scheduleJob('20 * * * * *', function(){
               if (error) {
                 console.log(error);
               } else {
-                console.log('Message sent');
+                ds.save(entity, function(err, key) {
+                  if (err) {
+                    console.log(err);
+                    return;
+                  }
+                  console.log(key);
+                });
               }
          });
        }
