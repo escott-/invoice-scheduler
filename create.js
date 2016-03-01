@@ -17,8 +17,13 @@ if (!projectId) {
 }
 
 const ds = gcloud.datastore.dataset({
-  projectId: config.PROJECT_ID
+  projectId: projectId
 });
+
+// Create a sink using a Bucket as a destination.
+//const gcs = gcloud.storage({
+//  projectId: projectId
+//});
 
 const today = new Date();
 const due = new Date()
@@ -68,7 +73,7 @@ const q = ds.createQuery("Invoice")
   })
   .limit(1);
 
-schedule.scheduleJob('2 * * * * *', function(){
+schedule.scheduleJob('20 * * * * *', function(){
   const invoice = new Invoice();
   const stream = fs.createWriteStream('invoice.pdf');
   ds.runQuery(q, function(err, invoices) {
@@ -80,7 +85,7 @@ schedule.scheduleJob('2 * * * * *', function(){
     var entity = {
       key: ds.key("Invoice"),
       data: {
-        invoice_number: invoices.length === 0 ? 1 : ++invoices[0].data.invoice_number,
+        invoice_number: invoices.length === 0 ? 12 : ++invoices[0].data.invoice_number,
         amount: parseInt(config.INVOICE_AMOUNT),
         email: config.EMAIL_TO,
         paid:"pending",
@@ -111,7 +116,6 @@ schedule.scheduleJob('2 * * * * *', function(){
                     console.log(err);
                     return;
                   }
-                  console.log(key);
                 });
               }
             });

@@ -1,9 +1,12 @@
 {
   "name": "invoice-generator",
   "version": "1.0.0",
-  "description": "",
+  "description": "This app will generate, schedule and email an invoice",
+  "repository": "https://github.com/escott-/invoice-scheduler",
   "scripts": {
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "start": "node app.js",
+    "deploy": "gcloud preview app deploy app.yaml"
   },
   "author": "",
   "license": "ISC",
@@ -27,5 +30,8 @@
   "devDependencies": {
     "babel-preset-stage-0": "^6.5.0",
     "webpack-node-externals": "^1.0.0"
+  },
+  "engines": {
+    "node": "5.4.1"
   }
 }
