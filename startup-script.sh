@@ -1,5 +1,4 @@
 set -v
-
 # Install logging monitor. The monitor will automatically pick up logs sent to
 # syslog.
 curl -s "https://storage.googleapis.com/signals-agents/logging/google-fluentd-install.sh" | bash
